@@ -4,7 +4,8 @@ keywords = {
     "int": "INTEGER",
     "str": "STRING",
     "bool": "BOOLEAN",
-    "float": "FLOAT",
+    "double": "DOUBLE",
+    "import": "IMPORT",
     "class": "CLASS",
     "enum": "ENUM",
     "when": "WHEN",
@@ -23,7 +24,7 @@ keywords = {
 
 tokens = (
     "NEWLINE",
-    "FLOATLIT",
+    "DOUBLELIT",
     "INTEGERLIT",
     "BOOLEANLIT",
     "STRINGLIT",
@@ -52,9 +53,11 @@ tokens = (
     "DIVIDE",
     "POWER",
     "MODULO",
-    "ASSIGN"
+    "ASSIGN",
+    "DOT"
 ) + tuple(keywords.values())
 
+t_DOT = r"\."
 t_COMMA = r","
 t_COLON = r":"
 t_LPAREN = r"\("
@@ -84,8 +87,18 @@ indentation_stack = [0]
 
 def t_NEWLINE(t):
     r"\n+"
+    t.value = "\n"
     t.lexer.lineno += len(t.value)
     return t
+
+
+def t_eof(t):
+    if 0 < indentation_stack[-1]:
+        indentation_stack.pop()
+        t.value = 0
+        t.type = "DEDENT"
+        return t
+    pass
 
 
 def t_DEDENT(t):
@@ -113,7 +126,7 @@ def t_whitespaces(t):
     pass
 
 
-def t_FLOATLIT(t):
+def t_DOUBLELIT(t):
     r"\d+\.\d+"
     return t
 
