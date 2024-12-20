@@ -80,6 +80,7 @@ def p_compound_stmt(p):
     compound_stmt : fun_def
                   | class_def
                   | when_stmt
+                  | for_stmt
     """
     p[0] = p[1]
 
@@ -94,12 +95,12 @@ def p_block(p):
 def p_decorators(p):
     """
     decorators : decorator NEWLINE
-               | decorators decorator NEWLINE
+               | decorator decorators
     """
     if len(p) == 3:
         p[0] = [p[1]]
     else:
-        p[0] = p[1] + [p[2]]
+        p[0] = [p[1]] + p[2]
 
 
 def p_decorator(p):
@@ -206,11 +207,26 @@ def p_otherwise_block(p):
     p[0] = ("otherwise", p[3])
 
 
+def p_for_stmt(p):
+    """
+    for_stmt : FOR IDENTIFIER IN expression COLON block
+    """
+    p[0] = ("for_stmt", p[2], p[4], p[6])
+
+
 def p_var_def(p):
     """
-    var_def : type IDENTIFIER ASSIGN expression
+    var_def : type IDENTIFIER
+            | type IDENTIFIER ASSIGN expression
     """
-    p[0] = ("var_def", p[1], p[2], p[4])
+    if len(p) == 2:
+        p[0] = (
+            "var_def",
+            p[1],
+            p[2],
+        )
+    else:
+        p[0] = ("var_def", p[1], p[2], p[4])
 
 
 def p_enum_def(p):
@@ -229,6 +245,13 @@ def p_enum_params(p):
         p[0] = [p[1]]
     else:
         p[0] = p[1] + [p[3]]
+
+
+def p_lambdef(p):
+    """
+    lambdef : params ASSIGN GREATER_THAN expression
+    """
+    p[0] = ("lambda", p[1], p[4])
 
 
 def p_fun_call_stmt(p):
@@ -295,16 +318,14 @@ def p_keyword_stmt(p):
     p[0] = (p[1],)
 
 
-def p_comparision(p):
+def p_expression_literals(p):
     """
-    expression : expression EQUALS expression
-               | expression NOT_EQUALS expression
-               | expression LESS_THAN expression
-               | expression LESS_EQUAL expression
-               | expression GREATER_THAN expression
-               | expression GREATER_EQUAL expression
+    expression : INTEGERLIT
+               | STRINGLIT
+               | BOOLEANLIT
+               | DOUBLELIT
     """
-    p[0] = ("comparison", p[2], p[1], p[3])
+    p[0] = p[1]
 
 
 def p_expression_binop(p):
@@ -326,6 +347,25 @@ def p_expression_group(p):
     p[0] = p[2]
 
 
+def p_expression_comparision(p):
+    """
+    expression : expression EQUALS expression
+               | expression NOT_EQUALS expression
+               | expression LESS_THAN expression
+               | expression LESS_EQUAL expression
+               | expression GREATER_THAN expression
+               | expression GREATER_EQUAL expression
+    """
+    p[0] = ("comparison", p[2], p[1], p[3])
+
+
+def p_expression_stmt(p):
+    """
+    expression : lambdef
+    """
+    p[0] = p[1]
+
+
 def p_expression_identifier(p):
     """
     expression : IDENTIFIER
@@ -333,22 +373,99 @@ def p_expression_identifier(p):
     p[0] = ("identifier", p[1])
 
 
-def p_expression(p):
+def p_type(p):
     """
-    expression : INTEGERLIT
-               | STRINGLIT
-               | BOOLEANLIT
-               | DOUBLELIT
+    type : primitive_types
+         | composed_types
     """
     p[0] = p[1]
 
 
-def p_type(p):
+def p_primitive_types(p):
     """
-    type : INTEGER
-         | STRING
-         | BOOLEAN
-         | DOUBLE
+    primitive_types : INTEGER
+                    | STRING
+                    | BOOLEAN
+                    | DOUBLE
+    """
+    p[0] = p[1]
+
+
+def p_composed_types(p):
+    """
+    composed_types : array_type
+                   | object_type
+    """
+    p[0] = p[1]
+
+
+def p_array_type(p):
+    """
+    array_type : type LBRACKET RBRACKET
+    """
+    p[0] = f"{p[1]}[]"
+
+
+def p_array_literals(p):
+    """
+    expression : LBRACKET RBRACKET
+               | LBRACKET args RBRACKET
+    """
+    if len(p) == 3:
+        p[0] = ("array_literal", [])
+    else:
+        p[0] = ("array_literal", p[2])
+
+
+def p_object_type(p):
+    """
+    object_type : LBRACE ktype IDENTIFIER COLON type RBRACE
+    """
+    p[0] = "{%s: %s}" % (p[2], p[5])
+
+
+def p_ktype(p):
+    """
+    ktype : INTEGER
+          | STRING
+    """
+    p[0] = p[1]
+
+
+def p_object_literals(p):
+    """
+    expression : LBRACE RBRACE
+               | LBRACE kvpairs RBRACE
+    """
+    if len(p) == 3:
+        p[0] = ("object_literal", {})
+    else:
+        p[0] = ("object_literal", p[2])
+
+
+def p_kvpairs(p):
+    """
+    kvpairs : kvpair
+            | kvpairs COMMA kvpair
+    """
+    if len(p) == 2:
+        p[0] = {p[1][0]: p[1][1]}
+    else:
+        p[0] = {**p[1], p[3][0]: p[3][1]}
+
+
+def p_kvpair(p):
+    """
+    kvpair : kv_key COLON expression
+    """
+    p[0] = (p[1], p[3])
+
+
+def p_kv_key(p):
+    """
+    kv_key : INTEGERLIT
+           | STRINGLIT
+           | DOUBLELIT
     """
     p[0] = p[1]
 

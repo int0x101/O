@@ -140,6 +140,47 @@ class TestParser(unittest.TestCase):
             ),
         )
 
+    def test_array_def(self):
+        data = pre("int[] sizes = [2, 4, 9]")
+        results = parser.parse(data)
+        self.assertEqual(
+            results[0],
+            ("var_def", "int[]", "sizes", ("array_literal", ["2", "4", "9"])),
+        )
+
+    def test_object_def(self):
+        data = pre('{str key: int} sizes= {"L": 6}')
+        results = parser.parse(data)
+        self.assertEqual(
+            results[0],
+            ("var_def", "{str: int}", "sizes", ("object_literal", {"L": "6"})),
+        )
+
+    def test_lambda_def(self):
+        data = pre("int a = int b => 2")
+        results = parser.parse(data)
+        self.assertEqual(
+            results[0],
+            ("var_def", "int", "a", ("lambda", [("param", "int", "b")], "2")),
+        )
+
+    def test_lambda_def_with_multiple_params(self):
+        data = pre("int x = int a, int b => a + b")
+        results = parser.parse(data)
+        self.assertEqual(
+            results[0],
+            (
+                "var_def",
+                "int",
+                "x",
+                (
+                    "lambda",
+                    [("param", "int", "a"), ("param", "int", "b")],
+                    ("binop", "+", ("identifier", "a"), ("identifier", "b")),
+                ),
+            ),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

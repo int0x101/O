@@ -152,6 +152,7 @@ def t_BOOLEANLIT(t):
 def t_STRINGLIT(t):
     r'"([^\\\n]|(\\.))*?"'
     t.value = t.value[1:-1]
+    return t
 
 
 def t_IDENTIFIER(t):
