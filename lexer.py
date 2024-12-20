@@ -84,11 +84,15 @@ t_MODULO = r"%"
 
 indentation_stack = [0]
 
+def t_COMMENT(t):
+    r'(\#!).*'
+    pass
+
 
 def t_NEWLINE(t):
     r"\n+"
-    t.value = "\n"
     t.lexer.lineno += len(t.value)
+    t.lexer.linestart = t.lexer.lexpos
     return t
 
 
@@ -161,8 +165,10 @@ def t_SKIP_WHITESPACES(t):
 
 
 def t_error(t):
-    print(f"Illigal character '{t.value[0]}'")
-    t.lexer.skip(1)
+    raise Exception(
+        "Illegal character '%s' on line %d, column %d"
+        % (t.value[0], t.lexer.lineno, t.lexer.lexpos - t.lexer.linestart + 1)
+    )
 
 
 lexer = lex.lex()
