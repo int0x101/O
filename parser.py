@@ -131,7 +131,7 @@ def p_class_def_raw(p):
     class_def_raw : CLASS IDENTIFIER COLON block
                   | CLASS IDENTIFIER EXTENDS IDENTIFIER COLON block
     """
-    if len(p) == 5:
+    if len(p) <= 6:
         p[0] = ("class_def", [], p[1], [], p[4])
     else:
         p[0] = ("class_def", [], p[1], [p[4]], p[6])
@@ -189,9 +189,9 @@ def p_when_stmt(p):
                | when_stmt when_block
     """
     if len(p) == 2:
-        p[0] = [p[1]]
+        p[0] = p[1]
     else:
-        p[0] = p[1] + [p[2]]
+        p[0] = p[1] + p[2]
 
 
 def p_when_block(p):

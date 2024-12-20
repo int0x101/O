@@ -58,9 +58,9 @@ class TestParser(unittest.TestCase):
         )
 
     def test_class_def(self):
-        data = pre("class MyClass:\n pass")
+        data = pre("class MyClass:\n int size = 0\n int a():\n  pass")
         results = parser.parse(data)
-        self.assertEqual(results[0], ("class_def", [], "class", [], [("pass",)]))
+        self.assertEqual(results[0], ('class_def', [], 'class', [], [('var_def', 'int', 'size', '0'), ('fun_def', [], 'int', 'a', [], [('pass',)])]))
 
     def test_class_def_with_decorator(self):
         data = pre("@decorator\nclass MyClass:\n pass")
@@ -254,6 +254,37 @@ class TestParser(unittest.TestCase):
                 ],
             ),
         )
+
+    def test_whole_program(self):
+        data = pre("""
+        int a = 10
+        str b = "hello"
+        bool c = True
+        double d = 3.14
+
+        class MyClass:
+            int x = 0
+            str y = "world"
+
+        int my_function():
+            return a + d
+
+        when a == 10:
+            pass
+        otherwise:
+            pass
+
+        for int i in [1, 2, 3]:
+            pass
+
+        switch b:
+            case "hello":
+                pass
+            case "world":
+                pass
+        """)
+        results = parser.parse(data)
+        self.assertEqual(len(results), 9)
 
 
 if __name__ == "__main__":

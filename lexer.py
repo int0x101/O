@@ -90,7 +90,7 @@ t_MODULO = r"%"
 indentation_stack = [0]
 
 def t_COMMENT(t):
-    r'(\#!).*'
+    r'\#.*'
     pass
 
 
