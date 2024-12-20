@@ -46,7 +46,7 @@ def p_statements(p):
 
 def p_statement(p):
     """
-    statement : simple_stmt 
+    statement : simple_stmt
               | simple_stmt NEWLINE
               | compound_stmt
     """
@@ -64,13 +64,6 @@ def p_simple_stmt(p):
     p[0] = p[1]
 
 
-def p_block(p):
-    """
-    block : NEWLINE INDENT statements DEDENT
-    """
-    p[0] = p[3]
-
-
 def p_compound_stmts(p):
     """
     compound_stmts : compound_stmt
@@ -85,19 +78,85 @@ def p_compound_stmts(p):
 def p_compound_stmt(p):
     """
     compound_stmt : fun_def
+                  | class_def
+                  | when_stmt
     """
     p[0] = p[1]
 
 
+def p_block(p):
+    """
+    block : NEWLINE INDENT statements DEDENT
+    """
+    p[0] = p[3]
+
+
+def p_decorators(p):
+    """
+    decorators : decorator NEWLINE
+               | decorators decorator NEWLINE
+    """
+    if len(p) == 3:
+        p[0] = [p[1]]
+    else:
+        p[0] = p[1] + [p[2]]
+
+
+def p_decorator(p):
+    """
+    decorator : AT IDENTIFIER
+              | AT IDENTIFIER LPAREN RPAREN
+              | AT IDENTIFIER LPAREN args RPAREN
+    """
+    p[0] = ("decorator", p[2])
+
+
+def p_class_def(p):
+    """
+    class_def : decorators class_def_raw
+              | class_def_raw
+    """
+    if len(p) == 3:
+        fun = list(p[2])
+        fun[1] = p[1]
+        p[0] = tuple(fun)
+    else:
+        p[0] = p[1]
+
+
+def p_class_def_raw(p):
+    """
+    class_def_raw : CLASS IDENTIFIER COLON block
+                  | CLASS IDENTIFIER EXTENDS IDENTIFIER COLON block
+    """
+    if len(p) == 5:
+        p[0] = ("class_def", [], p[1], [], p[4])
+    else:
+        p[0] = ("class_def", [], p[1], [p[4]], p[6])
+
+
 def p_fun_def(p):
     """
-    fun_def : type IDENTIFIER LPAREN RPAREN COLON block
-            | type IDENTIFIER LPAREN params RPAREN COLON block
+    fun_def : decorators fun_def_raw
+            | fun_def_raw
+    """
+    if len(p) == 3:
+        fun = list(p[2])
+        fun[1] = p[1]
+        p[0] = tuple(fun)
+    else:
+        p[0] = p[1]
+
+
+def p_fun_def_raw(p):
+    """
+    fun_def_raw : type IDENTIFIER LPAREN RPAREN COLON block
+                | type IDENTIFIER LPAREN params RPAREN COLON block
     """
     if len(p) == 7:
-        p[0] = ("fun_def", p[1], p[2], [], p[6])
+        p[0] = ("fun_def", [], p[1], p[2], [], p[6])
     else:
-        p[0] = ("fun_def", p[1], p[2], p[4], p[7])
+        p[0] = ("fun_def", [], p[1], p[2], p[4], p[7])
 
 
 def p_params(p):
@@ -116,6 +175,35 @@ def p_param(p):
     param : type IDENTIFIER
     """
     p[0] = ("param", p[1], p[2])
+
+
+def p_when_stmt(p):
+    """
+    when_stmt : when_block
+               | when_stmt when_block
+    """
+    if len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = p[1] + [p[2]]
+
+
+def p_when_block(p):
+    """
+    when_block : WHEN expression COLON block otherwise_block
+              | WHEN expression COLON block
+    """
+    if len(p) == 5:
+        p[0] = ("when", p[2], p[4], None)
+    else:
+        p[0] = ("when", p[2], p[4], p[5])
+
+
+def p_otherwise_block(p):
+    """
+    otherwise_block : OTHERWISE COLON block
+    """
+    p[0] = ("otherwise", p[3])
 
 
 def p_var_def(p):
@@ -183,7 +271,7 @@ def p_module_name(p):
         p[0] = p[1] + [p[3]]
 
 
-def log_stmt(p):
+def p_log_stmt(p):
     """
     log_stmt : LOG expression
     """

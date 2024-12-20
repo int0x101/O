@@ -55,6 +55,7 @@ tokens = (
     "MODULO",
     "ASSIGN",
     "DOT",
+    "AT",
 ) + tuple(keywords.values())
 
 t_DOT = r"\."
@@ -66,6 +67,7 @@ t_LBRACKET = r"\["
 t_RBRACKET = r"\]"
 t_LBRACE = r"\{"
 t_RBRACE = r"\}"
+t_AT = r"@"
 
 t_ASSIGN = r"="
 t_EQUALS = r"=="
@@ -97,7 +99,6 @@ def t_NEWLINE(t):
 
 
 def t_eof(t):
-    print(indentation_stack)
     if 0 < indentation_stack[-1]:
         indentation_stack.pop()
         t.value = 0
