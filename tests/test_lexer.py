@@ -5,7 +5,7 @@ from utils import pre
 
 class TestLexer(unittest.TestCase):
     def test_string_var_def(self):
-        data = pre('''str a = "hello"\n''')
+        data = pre('''str a = "hello"''')
         lexer.input(data)
         tokens = list(lexer)
         self.assertEqual(len(tokens), 5)

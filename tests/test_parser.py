@@ -181,6 +181,80 @@ class TestParser(unittest.TestCase):
             ),
         )
 
+    def test_for_stmt(self):
+        data = pre("for int i in [2,3,4]:\n pass")
+        results = parser.parse(data)
+        self.assertEqual(
+            results[0],
+            (
+                "for_stmt",
+                ("param", "int", "i"),
+                ("array_literal", ["2", "3", "4"]),
+                [("pass",)],
+            ),
+        )
+
+    def test_for_stmt_with_block(self):
+        data = pre("for int i in [1,2]:\n int a = 0\n int b = 1")
+        results = parser.parse(data)
+        self.assertEqual(
+            results[0],
+            (
+                "for_stmt",
+                ("param", "int", "i"),
+                ("array_literal", ["1", "2"]),
+                [("var_def", "int", "a", "0"), ("var_def", "int", "b", "1")],
+            ),
+        )
+
+    def test_switch_stmt(self):
+        data = pre("switch a:\n case 4:\n  return 0")
+        results = parser.parse(data)
+        self.assertEqual(
+            results[0],
+            (
+                "switch_stmt",
+                ("identifier", "a"),
+                [("case", "4", [("return", "0")])],
+            ),
+        )
+
+    def test_switch_stmt_with_multiple_cases(self):
+        data = pre("switch y:\n case 1:\n  pass\n case 2:\n  pass\n case 3:\n  pass")
+        results = parser.parse(data)
+        self.assertEqual(len(results[0][2]), 3)
+        self.assertEqual(
+            results[0],
+            (
+                "switch_stmt",
+                ("identifier", "y"),
+                [
+                    ("case", "1", [("pass",)]),
+                    ("case", "2", [("pass",)]),
+                    ("case", "3", [("pass",)]),
+                ],
+            ),
+        )
+
+    def test_switch_stmt_with_block(self):
+        data = pre("switch z:\n case 1:\n  int a = 0\n  int b = 1\n case 2:\n  pass")
+        results = parser.parse(data)
+        self.assertEqual(
+            results[0],
+            (
+                "switch_stmt",
+                ("identifier", "z"),
+                [
+                    (
+                        "case",
+                        "1",
+                        [("var_def", "int", "a", "0"), ("var_def", "int", "b", "1")],
+                    ),
+                    ("case", "2", [("pass",)]),
+                ],
+            ),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

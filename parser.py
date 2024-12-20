@@ -81,6 +81,7 @@ def p_compound_stmt(p):
                   | class_def
                   | when_stmt
                   | for_stmt
+                  | switch_stmt
     """
     p[0] = p[1]
 
@@ -153,7 +154,10 @@ def p_fun_def_raw(p):
     """
     fun_def_raw : type IDENTIFIER LPAREN RPAREN COLON block
                 | type IDENTIFIER LPAREN params RPAREN COLON block
+                | ASYNC fun_def_raw
     """
+    if len(p) == 3:
+        p[0] = ("async", p[2])
     if len(p) == 7:
         p[0] = ("fun_def", [], p[1], p[2], [], p[6])
     else:
@@ -162,7 +166,8 @@ def p_fun_def_raw(p):
 
 def p_params(p):
     """
-    params : param
+    params :
+           | param
            | params COMMA param
     """
     if len(p) == 2:
@@ -209,9 +214,35 @@ def p_otherwise_block(p):
 
 def p_for_stmt(p):
     """
-    for_stmt : FOR IDENTIFIER IN expression COLON block
+    for_stmt : FOR param IN expression COLON block
     """
     p[0] = ("for_stmt", p[2], p[4], p[6])
+
+
+def p_switch_stmt(p):
+    """
+    switch_stmt : SWITCH expression COLON switch_cases DEDENT
+                | SWITCH expression COLON switch_cases
+    """
+    p[0] = ("switch_stmt", p[2], p[4])
+
+
+def p_switch_cases(p):
+    """
+    switch_cases : NEWLINE INDENT switch_case
+                 | switch_cases switch_case
+    """
+    if len(p) == 4:
+        p[0] = [p[3]]
+    else:
+        p[0] = p[1] + [p[2]]
+
+
+def p_switch_case(p):
+    """
+    switch_case : CASE expression COLON NEWLINE INDENT statements DEDENT
+    """
+    p[0] = ("case", p[2], p[6])
 
 
 def p_var_def(p):
@@ -219,7 +250,7 @@ def p_var_def(p):
     var_def : type IDENTIFIER
             | type IDENTIFIER ASSIGN expression
     """
-    if len(p) == 2:
+    if len(p) == 3:
         p[0] = (
             "var_def",
             p[1],
@@ -292,13 +323,6 @@ def p_module_name(p):
         p[0] = [p[1]]
     else:
         p[0] = p[1] + [p[3]]
-
-
-def p_log_stmt(p):
-    """
-    log_stmt : LOG expression
-    """
-    p[0] = (p[1], p[2])
 
 
 def p_return_stmt(p):
