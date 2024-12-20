@@ -45,9 +45,15 @@ class TestParser(unittest.TestCase):
         self.assertEqual(results[0], ("fun_call", "b", ["0"]))
 
     def test_fun_def(self):
-        data = pre("int a():\n int b = 8\n return 0")
+        data = pre("int a = 0\nint a():\n int b():\n  return 0\n int c():\n  return 0")
         results = parser.parse(data)
-        self.assertEqual(results[0], "fun_def")
+        self.assertEqual(len(results), 2)
+    
+    # def test_parsing_file_code(self):
+    #     with open("tests/example.o", "r") as file:
+    #         data = pre(file.read())
+    #         results = parser.parse(data)
+    #         self.assertEqual(len(results), 2)
 
 
 if __name__ == "__main__":

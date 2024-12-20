@@ -35,21 +35,22 @@ def p_program(p):
 
 def p_statements(p):
     """
-    statements : simple_stmts
-               | compound_stmt
+    statements : statement
+               | statements statement
     """
-    p[0] = p[1]
-
-
-def p_simple_stmts(p):
-    """
-    simple_stmts : simple_stmt NEWLINE
-                 | simple_stmts simple_stmt NEWLINE
-    """
-    if len(p) == 3:
+    if len(p) == 2:
         p[0] = [p[1]]
     else:
         p[0] = p[1] + [p[2]]
+
+
+def p_statement(p):
+    """
+    statement : simple_stmt 
+              | simple_stmt NEWLINE
+              | compound_stmt
+    """
+    p[0] = p[1]
 
 
 def p_simple_stmt(p):
@@ -70,6 +71,17 @@ def p_block(p):
     p[0] = p[3]
 
 
+def p_compound_stmts(p):
+    """
+    compound_stmts : compound_stmt
+                   | compound_stmts compound_stmt
+    """
+    if len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = p[1] + [p[2]]
+
+
 def p_compound_stmt(p):
     """
     compound_stmt : fun_def
@@ -83,15 +95,15 @@ def p_fun_def(p):
             | type IDENTIFIER LPAREN params RPAREN COLON block
     """
     if len(p) == 7:
-        p[0] = ("fun_def", p[1], p[2], p[6])
+        p[0] = ("fun_def", p[1], p[2], [], p[6])
     else:
-        p[0] = ("fun_def", p[1], p[4], p[7])
+        p[0] = ("fun_def", p[1], p[2], p[4], p[7])
 
 
 def p_params(p):
     """
     params : param
-               | params COMMA param
+           | params COMMA param
     """
     if len(p) == 2:
         p[0] = [p[1]]

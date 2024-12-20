@@ -19,7 +19,7 @@ keywords = {
     "in": "IN",
     "escape": "ESCAPE",
     "return": "RETURN",
-    "pass": "PASS"
+    "pass": "PASS",
 }
 
 tokens = (
@@ -54,7 +54,7 @@ tokens = (
     "POWER",
     "MODULO",
     "ASSIGN",
-    "DOT"
+    "DOT",
 ) + tuple(keywords.values())
 
 t_DOT = r"\."
@@ -93,6 +93,7 @@ def t_NEWLINE(t):
 
 
 def t_eof(t):
+    print(indentation_stack)
     if 0 < indentation_stack[-1]:
         indentation_stack.pop()
         t.value = 0
@@ -103,9 +104,10 @@ def t_eof(t):
 
 def t_DEDENT(t):
     r"(?<=\n)\S"
-    t.value = 0
-    if indentation_stack[-1] > 0:
+    t.value = len(t.value)
+    while indentation_stack[-1] > 0:
         indentation_stack.pop()
+        t.type = "DEDENT"
         return t
     pass
 
@@ -119,7 +121,8 @@ def t_whitespaces(t):
         t.type = "INDENT"
         return t
     elif spaces < indentation_stack[-1]:
-        indentation_stack.pop()
+        while indentation_stack[-1] > spaces and len(indentation_stack) > 1:
+            indentation_stack.pop()
         t.value = spaces
         t.type = "DEDENT"
         return t
