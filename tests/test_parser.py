@@ -281,3 +281,23 @@ switch b:
 """
     results = parser.parse(data)
     assert len(results) == 10
+
+
+def test_array_range():
+    data = "[1...10]"
+    results = parser.parse(data)
+    assert results[0] == ("array_range", "1", "10")
+
+def test_array_range_with_variables():
+    data = "[a...b]"
+    results = parser.parse(data)
+    assert results[0] == ("array_range", ("identifier", "a"), ("identifier", "b"))
+
+def test_array_range_with_expressions():
+    data = "[a + 1...b - 1]"
+    results = parser.parse(data)
+    assert results[0] == (
+        "array_range",
+        ("binop", "+", ("identifier", "a"), "1"),
+        ("binop", "-", ("identifier", "b"), "1"),
+    )

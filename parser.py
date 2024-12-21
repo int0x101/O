@@ -2,27 +2,12 @@ import ply.yacc as yacc
 from lexer import tokens
 
 precedence = (
-    (
-        "left",
-        "EQUALS",
-        "NOT_EQUALS",
-        "LESS_THAN",
-        "LESS_EQUAL",
-        "GREATER_THAN",
-        "GREATER_EQUAL",
-    ),
-    (
-        "left",
-        "PLUS",
-        "MINUS",
-    ),
-    (
-        "left",
-        "TIMES",
-        "DIVIDE",
-    ),
-    ("left", "MODULO"),
-    ("right", "POWER"),
+    ("left", "EQEQUAL", "NOT_EQEQUAL", "LESS", "LESSEQUAL", "GREATER", "GREATEREQUAL"),
+    ("left", "PLUS", "MINUS"),
+    ("left", "STAR", "SLASH"),
+    ("left", "PERCENT"),
+    ("right", "DOUBLESTAR"),
+    ("left", "DOUBLE_VBAR"),
 )
 
 
@@ -56,10 +41,13 @@ def p_statement(p):
 def p_simple_stmt(p):
     """
     simple_stmt : var_def
+                | var_assign
                 | enum_def
                 | fun_call_stmt
                 | return_stmt
                 | keyword_stmt
+                | import_stmt
+                | expression
     """
     p[0] = p[1]
 
@@ -108,8 +96,8 @@ def p_decorators(p):
 def p_decorator(p):
     """
     decorator : AT IDENTIFIER
-              | AT IDENTIFIER LPAREN RPAREN
-              | AT IDENTIFIER LPAREN args RPAREN
+              | AT IDENTIFIER LPAR RPAR
+              | AT IDENTIFIER LPAR args RPAR
     """
     p[0] = ("decorator", p[2])
 
@@ -153,8 +141,8 @@ def p_fun_def(p):
 
 def p_fun_def_raw(p):
     """
-    fun_def_raw : type IDENTIFIER LPAREN RPAREN COLON block
-                | type IDENTIFIER LPAREN params RPAREN COLON block
+    fun_def_raw : type IDENTIFIER LPAR RPAR COLON block
+                | type IDENTIFIER LPAR params RPAR COLON block
                 | ASYNC fun_def_raw
     """
     if len(p) == 3:
@@ -167,8 +155,7 @@ def p_fun_def_raw(p):
 
 def p_params(p):
     """
-    params :
-           | param
+    params : param
            | params COMMA param
     """
     if len(p) == 2:
@@ -252,16 +239,19 @@ def p_switch_case(p):
 def p_var_def(p):
     """
     var_def : type IDENTIFIER
-            | type IDENTIFIER ASSIGN expression
+            | type IDENTIFIER EQUAL expression
     """
     if len(p) == 3:
-        p[0] = (
-            "var_def",
-            p[1],
-            p[2],
-        )
+        p[0] = ("var_def", p[1], p[2])
     else:
         p[0] = ("var_def", p[1], p[2], p[4])
+
+
+def p_var_assign(p):
+    """
+    var_assign : IDENTIFIER EQUAL expression
+    """
+    p[0] = ("var_assign", p[1], p[3])
 
 
 def p_enum_def(p):
@@ -284,15 +274,15 @@ def p_enum_params(p):
 
 def p_lambdef(p):
     """
-    lambdef : params ASSIGN GREATER_THAN expression
+    lambdef : params EQUAL GREATER expression
     """
     p[0] = ("lambda", p[1], p[4])
 
 
 def p_fun_call_stmt(p):
     """
-    fun_call_stmt : IDENTIFIER LPAREN RPAREN
-                  | IDENTIFIER LPAREN args RPAREN
+    fun_call_stmt : IDENTIFIER LPAR RPAR
+                  | IDENTIFIER LPAR args RPAR
     """
     if len(p) == 4:
         p[0] = ("fun_call", p[1], [])
@@ -360,29 +350,29 @@ def p_expression_binop(p):
     """
     expression : expression PLUS expression
                | expression MINUS expression
-               | expression TIMES expression
-               | expression DIVIDE expression
-               | expression MODULO expression
-               | expression POWER expression
+               | expression STAR expression
+               | expression SLASH expression
+               | expression PERCENT expression
+               | expression DOUBLESTAR expression
     """
     p[0] = ("binop", p[2], p[1], p[3])
 
 
 def p_expression_group(p):
     """
-    expression : LPAREN expression RPAREN
+    expression : LPAR expression RPAR
     """
     p[0] = p[2]
 
 
 def p_expression_comparision(p):
     """
-    expression : expression EQUALS expression
-               | expression NOT_EQUALS expression
-               | expression LESS_THAN expression
-               | expression LESS_EQUAL expression
-               | expression GREATER_THAN expression
-               | expression GREATER_EQUAL expression
+    expression : expression EQEQUAL expression
+               | expression NOT_EQEQUAL expression
+               | expression LESS expression
+               | expression LESSEQUAL expression
+               | expression GREATER expression
+               | expression GREATEREQUAL expression
     """
     p[0] = ("comparison", p[2], p[1], p[3])
 
@@ -399,6 +389,34 @@ def p_expression_identifier(p):
     expression : IDENTIFIER
     """
     p[0] = ("identifier", p[1])
+
+
+def p_expression_string_template(p):
+    """
+    expression : TEMPLATE_STRING
+    """
+    p[0] = ("template_string", p[1])
+
+
+def p_expression_inline_condition(p):
+    """
+    expression : expression QUESTION expression EXCLAMATION expression
+    """
+    p[0] = ("inline_condition", p[1], p[3], p[5])
+
+
+def p_expression_logical_or(p):
+    """
+    expression : expression DOUBLE_VBAR expression
+    """
+    p[0] = ("logical_or", p[1], p[3])
+
+
+def p_expression_logical_and(p):
+    """
+    expression : expression DOUBLE_AMP expression
+    """
+    p[0] = ("logical_and", p[1], p[3])
 
 
 def p_type(p):
@@ -429,20 +447,27 @@ def p_composed_types(p):
 
 def p_array_type(p):
     """
-    array_type : type LBRACKET RBRACKET
+    array_type : type LSQB RSQB
     """
     p[0] = f"{p[1]}[]"
 
 
 def p_array_literals(p):
     """
-    expression : LBRACKET RBRACKET
-               | LBRACKET args RBRACKET
+    expression : LSQB RSQB
+               | LSQB args RSQB
     """
     if len(p) == 3:
         p[0] = ("array_literal", [])
     else:
         p[0] = ("array_literal", p[2])
+
+
+def p_array_range(p):
+    """
+    expression : LSQB expression ELLIPSIS expression RSQB
+    """
+    p[0] = ("array_range", p[2], p[4])
 
 
 def p_object_type(p):

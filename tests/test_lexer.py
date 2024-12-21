@@ -24,3 +24,19 @@ def test_comparisons():
     lexer.input(data)
     tokens = list(lexer)
     assert len(tokens) == 13
+
+def test_template_string():
+    data = 't"Hello! {name}"'
+    lexer.input(data)
+    tokens = list(lexer)
+    assert len(tokens) == 1
+    assert tokens[0].type == "TEMPLATE_STRING"
+    assert tokens[0].value == 'Hello! {name}'
+
+def test_inline_condition():
+    data = "a == b ? x ! y"
+    lexer.input(data)
+    tokens = list(lexer)
+    assert len(tokens) == 7
+    assert tokens[3].type == "QUESTION"
+    assert tokens[5].type == "EXCLAMATION"

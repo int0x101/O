@@ -1,94 +1,123 @@
 import re
 import ply.lex as lex
 
+# Keywords
 keywords = {
+    # Data types
     "int": "INTEGER",
     "str": "STRING",
     "bool": "BOOLEAN",
     "double": "DOUBLE",
+
+    # Declarations
     "import": "IMPORT",
     "class": "CLASS",
     "enum": "ENUM",
+
+    # Control flow
     "when": "WHEN",
     "otherwise": "OTHERWISE",
-    "log": "LOG",
-    "include": "INCLUDE",
-    "extends": "EXTENDS",
-    "self": "SELF",
-    "skip": "SKIP",
     "for": "FOR",
     "in": "IN",
     "switch": "SWITCH",
     "case": "CASE",
+    "try": "TRY",
+    "except": "EXCEPT",
+
+    # Functions and methods
+    "log": "LOG",
+    "include": "INCLUDE",
+    "extends": "EXTENDS",
+    "self": "SELF",
     "async": "ASYNC",
     "escape": "ESCAPE",
     "return": "RETURN",
     "pass": "PASS",
-    "try": "TRY",
-    "except": "EXCEPT",
+    "skip": "SKIP",
 }
 
+# Token list
 tokens = (
-    "NEWLINE",
+    # Literals
     "DOUBLELIT",
     "INTEGERLIT",
     "BOOLEANLIT",
     "STRINGLIT",
+    "TEMPLATE_STRING",
     "IDENTIFIER",
-    # Terminators
+
+    # Indentation
     "INDENT",
     "DEDENT",
+
+    # Delimiters
     "COMMA",
     "COLON",
-    "LPAREN",
-    "RPAREN",
-    "LBRACKET",
-    "RBRACKET",
+    "LPAR",
+    "RPAR",
+    "LSQB",
+    "RSQB",
     "LBRACE",
     "RBRACE",
-    # Symbols
-    "EQUALS",
-    "NOT_EQUALS",
-    "LESS_THAN",
-    "LESS_EQUAL",
-    "GREATER_THAN",
-    "GREATER_EQUAL",
-    "PLUS",
-    "MINUS",
-    "TIMES",
-    "DIVIDE",
-    "POWER",
-    "MODULO",
-    "ASSIGN",
     "DOT",
     "AT",
+
+    # Operators
+    "EQEQUAL",
+    "NOT_EQEQUAL",
+    "LESS",
+    "LESSEQUAL",
+    "GREATER",
+    "GREATEREQUAL",
+    "PLUS",
+    "MINUS",
+    "STAR",
+    "SLASH",
+    "DOUBLESTAR",
+    "PERCENT",
+    "EQUAL",
+    "VBAR",
+    "DOUBLE_VBAR",
+    "DOUBLE_AMP",
+    "EXCLAMATION",
+    "QUESTION",
+    "ELLIPSIS",
+
+    # Keywords
+    "NEWLINE",
 ) + tuple(keywords.values())
 
+# Terminators
 t_DOT = r"\."
 t_COMMA = r","
 t_COLON = r":"
-t_LPAREN = r"\("
-t_RPAREN = r"\)"
-t_LBRACKET = r"\["
-t_RBRACKET = r"\]"
+t_LPAR = r"\("
+t_RPAR = r"\)"
+t_LSQB = r"\["
+t_RSQB = r"\]"
 t_LBRACE = r"\{"
 t_RBRACE = r"\}"
 t_AT = r"@"
 
-t_ASSIGN = r"="
-t_EQUALS = r"=="
-t_NOT_EQUALS = r"!="
-t_LESS_THAN = r"<"
-t_LESS_EQUAL = r"<="
-t_GREATER_THAN = r">"
-t_GREATER_EQUAL = r">="
-
+t_EQUAL = r"="
+t_EQEQUAL = r"=="
+t_NOT_EQEQUAL = r"!="
+t_LESS = r"<"
+t_LESSEQUAL = r"<="
+t_GREATER = r">"
+t_GREATEREQUAL = r">="
+t_DOUBLE_VBAR = r"\|\|"
+t_DOUBLE_AMP = r"&&"
 t_PLUS = r"\+"
 t_MINUS = r"-"
-t_TIMES = r"\*"
-t_DIVIDE = r"/"
-t_POWER = r"\*\*"
-t_MODULO = r"%"
+t_STAR = r"\*"
+t_SLASH = r"/"
+t_DOUBLESTAR = r"\*\*"
+t_PERCENT = r"%"
+t_VBAR = r"\|"
+t_EXCLAMATION = r"!"
+t_QUESTION = r"\?"
+t_ELLIPSIS = r"\.\.\."
 
 indentation_stack = [0]
 
@@ -134,6 +163,12 @@ def t_INTEGERLIT(t):
 
 def t_BOOLEANLIT(t):
     r"True|False"
+    return t
+
+
+def t_TEMPLATE_STRING(t):
+    r't"([^\\\n]|(\\.))*?"'
+    t.value = t.value[2:-1]
     return t
 
 
