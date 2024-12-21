@@ -79,9 +79,10 @@ def p_compound_stmt(p):
     """
     compound_stmt : fun_def
                   | class_def
-                  | when_stmt
+                  | when_stmts
                   | for_stmt
                   | switch_stmt
+                  | try_stmt
     """
     p[0] = p[1]
 
@@ -183,26 +184,29 @@ def p_param(p):
     p[0] = ("param", p[1], p[2])
 
 
-def p_when_stmt(p):
+def p_when_stmts(p):
     """
-    when_stmt : when_block
-               | when_stmt when_block
+    when_stmts : when_stmt
+               | when_stmt otherwise_block
+               | when_stmts when_stmt
+               | when_stmts when_stmt otherwise_block
     """
     if len(p) == 2:
-        p[0] = p[1]
+        p[0] = ("when_stmts", p[1])
+    elif len(p) == 3:
+        if p[2][0] == "otherwise":
+            p[0] = ("when_stmts", p[1]) + (p[2],)
+        else:
+            p[0] = ("when_stmts", p[1][1]) + (p[2],)
     else:
-        p[0] = p[1] + p[2]
+        p[0] = ("when_stmts", p[1][1]) + (p[2], p[3])
 
 
-def p_when_block(p):
+def p_when_stmt(p):
     """
-    when_block : WHEN expression COLON block otherwise_block
-              | WHEN expression COLON block
+    when_stmt : WHEN expression COLON block
     """
-    if len(p) == 5:
-        p[0] = ("when", p[2], p[4], None)
-    else:
-        p[0] = ("when", p[2], p[4], p[5])
+    p[0] = ("when", p[2], p[4])
 
 
 def p_otherwise_block(p):
@@ -494,6 +498,35 @@ def p_kv_key(p):
     p[0] = p[1]
 
 
+def p_try_stmt(p):
+    """
+    try_stmt : TRY COLON block except_blocks
+    """
+    p[0] = ("try", p[3], p[4])
+
+
+def p_except_blocks(p):
+    """
+    except_blocks : except_block
+                  | except_blocks except_block
+    """
+    if len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = p[1] + [p[2]]
+
+
+def p_except_block(p):
+    """
+    except_block : EXCEPT COLON block
+                 | EXCEPT IDENTIFIER COLON block
+    """
+    if len(p) == 4:
+        p[0] = ("except", None, p[3])
+    else:
+        p[0] = ("except", p[2], p[4])
+
+
 def p_error(p):
     if p:
         print(f"Syntax error at '{p.value}'")
@@ -501,4 +534,12 @@ def p_error(p):
         print("Syntax error at EOF")
 
 
+def ensure_newline_at_end(data):
+    if not data.endswith("\n"):
+        return data + "\n"
+    return data
+
+
 parser = yacc.yacc()
+parser_function = parser.parse
+parser.parse = lambda data: parser_function(ensure_newline_at_end(data))

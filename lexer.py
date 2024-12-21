@@ -1,3 +1,4 @@
+import re
 import ply.lex as lex
 
 keywords = {
@@ -19,10 +20,12 @@ keywords = {
     "in": "IN",
     "switch": "SWITCH",
     "case": "CASE",
-    'async': 'ASYNC',
+    "async": "ASYNC",
     "escape": "ESCAPE",
     "return": "RETURN",
     "pass": "PASS",
+    "try": "TRY",
+    "except": "EXCEPT",
 }
 
 tokens = (
@@ -89,8 +92,9 @@ t_MODULO = r"%"
 
 indentation_stack = [0]
 
+
 def t_COMMENT(t):
-    r'\#.*'
+    r"\#.*"
     pass
 
 
@@ -101,40 +105,21 @@ def t_NEWLINE(t):
     return t
 
 
-def t_eof(t):
-    if 0 < indentation_stack[-1]:
-        indentation_stack.pop()
-        t.value = 0
-        t.type = "DEDENT"
-        return t
-    pass
-
-
-def t_DEDENT(t):
-    r"(?<=\n)\S"
-    t.value = len(t.value)
-    while indentation_stack[-1] > 0:
-        indentation_stack.pop()
-        t.type = "DEDENT"
-        return t
-    pass
-
-
 def t_whitespaces(t):
-    r"(?<=\n)[\s\t]+|^[\s\t]+"
-    spaces = len(t.value)
-    if spaces > indentation_stack[-1]:
-        indentation_stack.append(spaces)
-        t.value = spaces
+    r"(?<=\n)[ \t]+"
+    t.value = len(t.value) - 1
+    if t.value > indentation_stack[-1]:
+        indentation_stack.append(t.value)
         t.type = "INDENT"
         return t
-    elif spaces < indentation_stack[-1]:
-        while indentation_stack[-1] > spaces and len(indentation_stack) > 1:
+    elif t.value < indentation_stack[-1]:
+        while indentation_stack[-1] > t.value and len(indentation_stack) > 1:
+            t.lexer.lexpos -= 1
+            t.value = indentation_stack[-1]
             indentation_stack.pop()
-        t.value = spaces
-        t.type = "DEDENT"
+            t.type = "DEDENT"
         return t
-    pass
+    return None
 
 
 def t_DOUBLELIT(t):
@@ -176,4 +161,12 @@ def t_error(t):
     )
 
 
+def sanitize(data):
+    multiple_newlines_regex = r"\n+"
+    sanitized_newline = "\n "
+    return re.sub(multiple_newlines_regex, sanitized_newline, data.lstrip())
+
+
 lexer = lex.lex()
+input_function = lexer.input
+lexer.input = lambda data: input_function(sanitize(data))
