@@ -8,12 +8,10 @@ keywords = {
     "str": "STRING",
     "bool": "BOOLEAN",
     "double": "DOUBLE",
-
     # Declarations
     "import": "IMPORT",
     "class": "CLASS",
     "enum": "ENUM",
-
     # Control flow
     "when": "WHEN",
     "otherwise": "OTHERWISE",
@@ -23,7 +21,6 @@ keywords = {
     "case": "CASE",
     "try": "TRY",
     "except": "EXCEPT",
-
     # Functions and methods
     "log": "LOG",
     "include": "INCLUDE",
@@ -45,11 +42,9 @@ tokens = (
     "STRINGLIT",
     "TEMPLATE_STRING",
     "IDENTIFIER",
-
     # Indentation
     "INDENT",
     "DEDENT",
-
     # Delimiters
     "COMMA",
     "COLON",
@@ -61,7 +56,6 @@ tokens = (
     "RBRACE",
     "DOT",
     "AT",
-
     # Operators
     "EQEQUAL",
     "NOT_EQEQUAL",
@@ -76,13 +70,18 @@ tokens = (
     "DOUBLESTAR",
     "PERCENT",
     "EQUAL",
+    "PLUS_EQUAL",
+    "MINUS_EQUAL",
+    "STAR_EQUAL",
+    "SLASH_EQUAL",
+    "DOUBLESTAR_EQUAL",
+    "PERCENT_EQUAL",
     "VBAR",
     "DOUBLE_VBAR",
     "DOUBLE_AMP",
     "EXCLAMATION",
     "QUESTION",
     "ELLIPSIS",
-
     # Keywords
     "NEWLINE",
 ) + tuple(keywords.values())
@@ -100,6 +99,13 @@ t_RBRACE = r"\}"
 t_AT = r"@"
 
 t_EQUAL = r"="
+t_PLUS_EQUAL = r"\+="
+t_MINUS_EQUAL = r"-="
+t_STAR_EQUAL = r"\*="
+t_SLASH_EQUAL = r"/="
+t_DOUBLESTAR_EQUAL = r"\*\*="
+t_PERCENT_EQUAL = r"%="
+
 t_EQEQUAL = r"=="
 t_NOT_EQEQUAL = r"!="
 t_LESS = r"<"

@@ -41,7 +41,7 @@ def p_statement(p):
 def p_simple_stmt(p):
     """
     simple_stmt : var_def
-                | var_assign
+                | assignment
                 | enum_def
                 | fun_call_stmt
                 | return_stmt
@@ -247,11 +247,24 @@ def p_var_def(p):
         p[0] = ("var_def", p[1], p[2], p[4])
 
 
-def p_var_assign(p):
+def p_assignment(p):
     """
-    var_assign : IDENTIFIER EQUAL expression
+    assignment : IDENTIFIER assignment_op_sign expression
     """
-    p[0] = ("var_assign", p[1], p[3])
+    p[0] = ("assignment", p[2], p[1], p[3])
+
+
+def p_assignment_op_sign(p):
+    """
+    assignment_op_sign : EQUAL
+                        | PLUS_EQUAL
+                        | MINUS_EQUAL
+                        | STAR_EQUAL
+                        | SLASH_EQUAL
+                        | PERCENT_EQUAL
+                        | DOUBLESTAR_EQUAL
+    """
+    p[0] = p[1]
 
 
 def p_enum_def(p):
@@ -489,11 +502,34 @@ def p_object_literals(p):
     """
     expression : LBRACE RBRACE
                | LBRACE kvpairs RBRACE
+               | LBRACE unpacked_kvpairs RBRACE
     """
     if len(p) == 3:
         p[0] = ("object_literal", {})
     else:
         p[0] = ("object_literal", p[2])
+
+
+def p_unpacked_kvpairs(p):
+    """
+    unpacked_kvpairs : unpacked_kvpair
+                     | unpacked_kvpairs COMMA unpacked_kvpair
+    """
+    if len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = p[1] + [p[3]]
+
+
+def p_unpacked_kvpair(p):
+    """
+    unpacked_kvpair : DOUBLESTAR IDENTIFIER
+                    | kvpair
+    """
+    if len(p) == 3:
+        p[0] = ("unpack", p[2])
+    else:
+        p[0] = p[1]
 
 
 def p_kvpairs(p):
@@ -511,7 +547,7 @@ def p_kvpair(p):
     """
     kvpair : kv_key COLON expression
     """
-    p[0] = (p[1], p[3])
+    p[0] = ("keypair", p[1], p[3])
 
 
 def p_kv_key(p):
