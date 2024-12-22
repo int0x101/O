@@ -8,6 +8,7 @@ keywords = {
     "str": "STRING",
     "bool": "BOOLEAN",
     "double": "DOUBLE",
+    "void": "VOID",
     # Declarations
     "import": "IMPORT",
     "class": "CLASS",
