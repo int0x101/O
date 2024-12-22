@@ -1,5 +1,6 @@
 import pytest
 from O.analyzer import SemanticAnalyzer
+import math
 
 
 @pytest.fixture
