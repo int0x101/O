@@ -1,5 +1,5 @@
 import pytest
-from parser import parser
+from Parser.parser import parser
 
 
 def test_var_def():
@@ -10,20 +10,20 @@ def test_var_def():
 def test_assignment_equal():
     data = "a = 5"
     results = parser.parse(data)
-    assert results[0] == ("assignment", "=", "a", "5")
+    assert results[0] == ("assignment", "=", "a", ("integer", "5"))
 
 
 def test_assignment_plus_equal():
     data = "a += 5"
     results = parser.parse(data)
-    assert results[0] == ("assignment", "+=", "a", "5")
+    assert results[0] == ("assignment", "+=", "a", ("integer", "5"))
 
 
 def test_multiline():
     data = "int a = 0\nint b = 1"
     results = parser.parse(data)
-    assert results[0] == ("var_def", "int", "a", "0")
-    assert results[1] == ("var_def", "int", "b", "1")
+    assert results[0] == ("var_def", "int", "a", ("integer", "0"))
+    assert results[1] == ("var_def", "int", "b", ("integer", "1"))
 
 
 def test_comparison():
@@ -52,7 +52,7 @@ def test_keyword_stmt():
 def test_function_call():
     data = "b(0)"
     results = parser.parse(data)
-    assert results[0] == ("fun_call", "b", ["0"])
+    assert results[0] == ("fun_call", "b", [("integer", "0")])
 
 
 def test_fun_def():
@@ -70,7 +70,7 @@ def test_fun_def_decorators():
         "int",
         "a",
         [],
-        [("return", "0")],
+        [("return", ("integer", "0"))],
     )
 
 
@@ -83,7 +83,7 @@ def test_class_def():
         "class",
         [],
         [
-            ("var_def", "int", "size", "0"),
+            ("var_def", "int", "size", ("integer", "0")),
             ("fun_def", [], "int", "a", [], [("pass",)]),
         ],
     )
@@ -173,7 +173,7 @@ def test_array_def():
         "var_def",
         "int[]",
         "sizes",
-        ("array_literal", ["2", "4", "9"]),
+        ("array_literal", [("integer", "2"), ("integer", "4"), ("integer", "9")]),
     )
 
 
@@ -184,7 +184,7 @@ def test_object_def():
         "var_def",
         "{str: int}",
         "sizes",
-        ("object_literal", [("keypair", "L", "6")]),
+        ("object_literal", [("keypair", "L", ("integer", "6"))]),
     )
 
 
@@ -195,7 +195,7 @@ def test_lambda_def():
         "var_def",
         "int",
         "a",
-        ("lambda", [("param", "int", "b")], "2"),
+        ("lambda", [("int", "b")], ("integer", "2")),
     )
 
 
@@ -208,7 +208,7 @@ def test_lambda_def_with_multiple_params():
         "x",
         (
             "lambda",
-            [("param", "int", "a"), ("param", "int", "b")],
+            [("int", "a"), ("int", "b")],
             ("binop", "+", ("identifier", "a"), ("identifier", "b")),
         ),
     )
@@ -219,8 +219,8 @@ def test_for_stmt():
     results = parser.parse(data)
     assert results[0] == (
         "for_stmt",
-        ("param", "int", "i"),
-        ("array_literal", ["2", "3", "4"]),
+        ("int", "i"),
+        ("array_literal", [("integer", "2"), ("integer", "3"), ("integer", "4")]),
         [("pass",)],
     )
 
@@ -230,9 +230,9 @@ def test_for_stmt_with_block():
     results = parser.parse(data)
     assert results[0] == (
         "for_stmt",
-        ("param", "int", "i"),
-        ("array_literal", ["1", "2"]),
-        [("var_def", "int", "a", "0"), ("var_def", "int", "b", "1")],
+        ("int", "i"),
+        ("array_literal", [("integer", "1"), ("integer", "2")]),
+        [("var_def", "int", "a", ("integer", "0")), ("var_def", "int", "b", ("integer", "1"))],
     )
 
 
@@ -242,7 +242,7 @@ def test_switch_stmt():
     assert results[0] == (
         "switch_stmt",
         ("identifier", "a"),
-        [("case", "4", [("return", "0")])],
+        [("case", ("integer", "4"), [("return", ("integer", "0"))])],
     )
 
 
@@ -254,9 +254,9 @@ def test_switch_stmt_with_multiple_cases():
         "switch_stmt",
         ("identifier", "y"),
         [
-            ("case", "1", [("pass",)]),
-            ("case", "2", [("pass",)]),
-            ("case", "3", [("pass",)]),
+            ("case", ("integer", "1"), [("pass",)]),
+            ("case", ("integer", "2"), [("pass",)]),
+            ("case", ("integer", "3"), [("pass",)]),
         ],
     )
 
@@ -270,10 +270,10 @@ def test_switch_stmt_with_block():
         [
             (
                 "case",
-                "1",
-                [("var_def", "int", "a", "0"), ("var_def", "int", "b", "1")],
+                ("integer", "1"),
+                [("var_def", "int", "a", ("integer", "0")), ("var_def", "int", "b", ("integer", "1"))],
             ),
-            ("case", "2", [("pass",)]),
+            ("case", ("integer", "2"), [("pass",)]),
         ],
     )
 
@@ -303,7 +303,7 @@ def test_try_multiple_except():
 def test_array_range():
     data = "[1...10]"
     results = parser.parse(data)
-    assert results[0] == ("array_range", "1", "10")
+    assert results[0] == ("array_range", ("integer", "1"), ("integer", "10"))
 
 
 def test_array_range_with_variables():
@@ -317,8 +317,8 @@ def test_array_range_with_expressions():
     results = parser.parse(data)
     assert results[0] == (
         "array_range",
-        ("binop", "+", ("identifier", "a"), "1"),
-        ("binop", "-", ("identifier", "b"), "1"),
+        ("binop", "+", ("identifier", "a"), ("integer", "1")),
+        ("binop", "-", ("identifier", "b"), ("integer", "1")),
     )
 
 
@@ -327,7 +327,7 @@ def test_object_unpacking():
     results = parser.parse(data)
     assert results[0] == (
         "object_literal",
-        [("unpack", "other"), ("keypair", "name", "hard265")],
+        [("unpack", "other"), ("keypair", "name", ("string", "hard265"))],
     )
 
 
@@ -336,5 +336,29 @@ def test_object_unpacking_multiple():
     results = parser.parse(data)
     assert results[0] == (
         "object_literal",
-        [("unpack", "other1"), ("unpack", "other2"), ("keypair", "name", "hard265")],
+        [("unpack", "other1"), ("unpack", "other2"), ("keypair", "name", ("string", "hard265"))],
     )
+
+
+def test_array_comprehension_basic():
+    data = "[x for int x in [1, 2, 3]]"
+    results = parser.parse(data)
+    assert results[0] == (
+        "array_comprehension",
+        ("identifier", "x"),
+        ("int", "x"),
+        ("array_literal", [("integer", "1"), ("integer", "2"), ("integer", "3")]),
+    )
+
+
+def test_array_comprehension_with_condition():
+    data = "[x for int x in [1, 2, 3] when x > 1]"
+    results = parser.parse(data)
+    assert results[0] == (
+        "array_comprehension",
+        ("identifier", "x"),
+        ("int", "x"),
+        ("array_literal", [("integer", "1"), ("integer", "2"), ("integer", "3")]),
+        ("comparison", ">", ("identifier", "x"), ("integer", "1")),
+    )
+

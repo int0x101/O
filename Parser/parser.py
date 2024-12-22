@@ -1,5 +1,5 @@
 import ply.yacc as yacc
-from lexer import tokens
+from Parser.lexer import tokens
 
 precedence = (
     ("left", "EQEQUAL", "NOT_EQEQUAL", "LESS", "LESSEQUAL", "GREATER", "GREATEREQUAL"),
@@ -168,7 +168,7 @@ def p_param(p):
     """
     param : type IDENTIFIER
     """
-    p[0] = ("param", p[1], p[2])
+    p[0] = (p[1], p[2])
 
 
 def p_when_stmts(p):
@@ -349,14 +349,24 @@ def p_keyword_stmt(p):
     p[0] = (p[1],)
 
 
-def p_expression_literals(p):
-    """
-    expression : INTEGERLIT
-               | STRINGLIT
-               | BOOLEANLIT
-               | DOUBLELIT
-    """
-    p[0] = p[1]
+def p_expression_integer_literal(p):
+    """expression : INTEGERLIT"""
+    p[0] = ("integer", p[1])
+
+
+def p_expression_double_literal(p):
+    """expression : DOUBLELIT"""
+    p[0] = ("double", p[1])
+
+
+def p_expression_boolean_literal(p):
+    """expression : BOOLEANLIT"""
+    p[0] = ("boolean", p[1])
+
+
+def p_expression_string_literal(p):
+    """expression : STRINGLIT"""
+    p[0] = ("string", p[1])
 
 
 def p_expression_binop(p):
@@ -481,6 +491,17 @@ def p_array_range(p):
     expression : LSQB expression ELLIPSIS expression RSQB
     """
     p[0] = ("array_range", p[2], p[4])
+
+
+def p_array_comprehension(p):
+    """
+    expression : LSQB expression FOR param IN expression RSQB
+               | LSQB expression FOR param IN expression WHEN expression RSQB
+    """
+    if len(p) == 8:
+        p[0] = ("array_comprehension", p[2], p[4], p[6])
+    else:
+        p[0] = ("array_comprehension", p[2], p[4], p[6], p[8])
 
 
 def p_object_type(p):

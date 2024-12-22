@@ -1,5 +1,5 @@
 import pytest
-from lexer import lexer
+from Parser.lexer import lexer
 
 def test_var_def():
     data = '''str a = "hello"'''
