@@ -1,5 +1,4 @@
 from .scope import Scope
-from .mappings import data_type_mappings
 
 
 class SemanticAnalyzer:
@@ -53,7 +52,7 @@ class SemanticAnalyzer:
         if symbol is None:
             raise Exception(f"Undefined variable '{name}'")
         self.analyze(value)
-        if data_type_mappings.get(symbol.type) != value[0]:
+        if symbol.type.startswith(value[0]):
             raise Exception(f"Type mismatch: cannot assign {value[0]} to {symbol[0]}")
 
     def analyze_identifier(self, node):
