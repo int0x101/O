@@ -44,8 +44,7 @@ class SemanticAnalyzer:
         self.analyze(value)
         if symbol.type.startswith(value[0]):
             raise Exception(
-                f"Type mismatch: cannot assign {
-                            value[0]} to {symbol[0]}"
+                f"Type mismatch: cannot assign { value[0]} to {symbol[0]}"
             )
 
     def analyze_enum_def(self, node):
