@@ -10,7 +10,7 @@ keywords = {
     "double": "DOUBLE",
     "void": "VOID",
     # Declarations
-    "import": "IMPORT",
+    "include": "INCLUDE",
     "class": "CLASS",
     "enum": "ENUM",
     # Control flow

@@ -2,7 +2,8 @@ import ply.yacc as yacc
 from Parser.lexer import tokens
 
 precedence = (
-    ("left", "EQEQUAL", "NOT_EQEQUAL", "LESS", "LESSEQUAL", "GREATER", "GREATEREQUAL"),
+    ("left", "EQEQUAL", "NOT_EQEQUAL", "LESS",
+     "LESSEQUAL", "GREATER", "GREATEREQUAL"),
     ("left", "PLUS", "MINUS"),
     ("left", "STAR", "SLASH"),
     ("left", "PERCENT"),
@@ -15,7 +16,7 @@ def p_program(p):
     """
     program : statements
     """
-    p[0] = p[1]
+    p[0] = ('program', p[1])
 
 
 def p_statements(p):
@@ -42,11 +43,12 @@ def p_simple_stmt(p):
     """
     simple_stmt : var_def
                 | assignment
+                | array_unpack
                 | enum_def
                 | fun_call_stmt
                 | return_stmt
                 | keyword_stmt
-                | import_stmt
+                | include_stmt
                 | expression
     """
     p[0] = p[1]
@@ -121,9 +123,9 @@ def p_class_def_raw(p):
                   | CLASS IDENTIFIER EXTENDS IDENTIFIER COLON block
     """
     if len(p) <= 6:
-        p[0] = ("class_def", [], p[1], [], p[4])
+        p[0] = ("class_def", [], p[2], [], p[4])
     else:
-        p[0] = ("class_def", [], p[1], [p[4]], p[6])
+        p[0] = ("class_def", [], p[2], [p[4]], p[6])
 
 
 def p_fun_def(p):
@@ -267,6 +269,32 @@ def p_assignment_op_sign(p):
     p[0] = p[1]
 
 
+def p_array_unpack(p):
+    """
+    array_unpack : LSQB params_opt_star RSQB
+                 | LSQB array_unpack RSQB
+    """
+    p[0] = p[2]
+
+
+def p_params_opt_star(p):
+    """
+    params_opt_star : params
+                    | STAR IDENTIFIER
+                    | params COMMA STAR IDENTIFIER
+                    | STAR IDENTIFIER COMMA params
+                    | params COMMA STAR IDENTIFIER COMMA params
+    """
+    actions = {
+        2: lambda p: p[1],
+        3: lambda p: ("star", p[2]),
+        4: lambda p: p[1] + [("star", p[3])],
+        5: lambda p: [("star", p[2])] + p[4],
+        6: lambda p: p[1] + [("star", p[3])] + p[5]
+    }
+    p[0] = actions[len(p)](p)
+
+
 def p_enum_def(p):
     """
     enum_def : ENUM IDENTIFIER LBRACE enum_params RBRACE
@@ -314,9 +342,9 @@ def p_args(p):
         p[0] = p[1] + [p[3]]
 
 
-def p_import_stmt(p):
+def p_include_stmt(p):
     """
-    import_stmt : IMPORT module_name
+    include_stmt : INCLUDE module_name
     """
     p[0] = (p[1], p[2])
 
@@ -456,6 +484,7 @@ def p_primitive_types(p):
                     | STRING
                     | BOOLEAN
                     | DOUBLE
+                    | VOID
     """
     p[0] = p[1]
 
@@ -506,7 +535,7 @@ def p_array_comprehension(p):
 
 def p_object_type(p):
     """
-    object_type : LBRACE ktype IDENTIFIER COLON type RBRACE
+    object_type : ktype COLON type
     """
     p[0] = "{%s: %s}" % (p[2], p[5])
 
