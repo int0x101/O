@@ -7,6 +7,12 @@ def test_var_def():
     tokens = list(lexer)
     assert len(tokens) == 4
 
+def test_fun_type():
+    data = '''() => int'''
+    lexer.input(data)
+    tokens = list(lexer)
+    assert len(tokens) == 5
+
 def test_function_def():
     data = '''int main():\n pass'''
     lexer.input(data)

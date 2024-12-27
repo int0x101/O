@@ -69,6 +69,7 @@ def p_compound_stmt(p):
     """
     compound_stmt : fun_def
                   | class_def
+                  | class_ctor_def
                   | when_stmts
                   | for_stmt
                   | switch_stmt
@@ -123,9 +124,20 @@ def p_class_def_raw(p):
                   | CLASS IDENTIFIER EXTENDS IDENTIFIER COLON block
     """
     if len(p) <= 6:
-        p[0] = ("class_def", [], p[2], [], p[4])
+        p[0] = ("class_def", [], p[2], None, p[4])
     else:
-        p[0] = ("class_def", [], p[2], [p[4]], p[6])
+        p[0] = ("class_def", [], p[2], p[4], p[6])
+
+
+def p_class_ctor_def(p):
+    """
+    class_ctor_def : IDENTIFIER LPAR RPAR COLON block
+                   | IDENTIFIER LPAR params RPAR COLON block
+    """
+    if len(p) == 6:
+        p[0] = ("class_ctor_def", p[1], [], p[5])
+    else:
+        p[0] = ("class_ctor_def", p[1], p[3], p[6])
 
 
 def p_fun_def(p):
@@ -472,8 +484,8 @@ def p_expression_logical_and(p):
 
 def p_type(p):
     """
-    type : primitive_types
-         | composed_types
+    type : composed_types
+         | primitive_types
     """
     p[0] = p[1]
 
@@ -495,6 +507,17 @@ def p_composed_types(p):
                    | object_type
     """
     p[0] = p[1]
+
+
+# def p_fun_type(p):
+#     """
+#     fun_type : LPAR RPAR EQUAL GREATER type
+#              | LPAR params RPAR EQUAL GREATER type
+#     """
+#     if len(p) == 6:
+#         p[0] = ("function", [], p[5])
+#     else:
+#         p[0] = ("function", p[2], p[6])
 
 
 def p_array_type(p):

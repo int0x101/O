@@ -9,140 +9,146 @@ def generator():
 
 
 def test_var_def(generator):
-    ast = ("program", [("var_def", "int", "x", ("integer", "42"))])
-    result = generator.generate(ast)
-    assert '%"x" = alloca i32\n  store i32 42, i32* %"x"' in result
+    ast = [
+        ('fun_def', [], 'int', 'main', [], [
+            ('var_def', 'str', 'a', ('string', 'hello'))
+        ])
+    ]
+    results = generator.generate(ast)
+    assert '%"a" = alloca i8*' in results
+    assert 'store i8* hello, i8** %"a"' in results
 
 
 def test_assignment(generator):
-    ast = ("program", [
-        ("var_def", "int", "x", ("integer", "42")),
-        ("assignment", "x", ("integer", "24"))
-    ])
-    result = generator.generate(ast)
-    assert 'store i32 42, i32* %"x"' in result
-    assert 'store i32 24, i32* %"x"' in result
-
-
-def test_enum_def(generator):
-    ast = ("program", [("enum_def", "Color", ["RED", "GREEN", "BLUE"])])
-    generator.generate(ast)
-    assert 'Color' in generator.current_scope()
-
-
-def test_binop(generator):
-    ast = ('program', [
-        ('var_def', 'int', 'c', ('binop', '+', ('integer', '3'), ('integer', '4')))
-    ])
-    ir_code = generator.generate(ast)
-    assert 'add i32 3, 4' in ir_code
-
-
-def test_comparison(generator):
-    ast = ('program', [
-        ('var_def', 'bool', 'c', ('comparison',
-         '==', ('integer', '3'), ('integer', '4')))
-    ])
-    ir_code = generator.generate(ast)
-    assert 'icmp eq i32 3, 4' in ir_code
-
-
-def test_integer(generator):
-    ast = ('program', [('var_def', 'int', 'a', ('integer', '5'))])
-    ir_code = generator.generate(ast)
-    assert 'i32 5' in ir_code
-
-
-def test_double(generator):
-    ast = ('program', [('var_def', 'double', 'a', ('double', '5.5'))])
-    ir_code = generator.generate(ast)
-    assert 'double 0x4016000000000000' in ir_code
-
-
-def test_string(generator):
-    ast = ('program', [('var_def', 'str', 'a', ('string', 'hello'))])
-    ir_code = generator.generate(ast)
-    assert '"a" = alloca i8' in ir_code
-    assert 'i8* hello' in ir_code
-
-
-def test_boolean(generator):
-    ast = ('program', [('var_def', 'bool', 'a', ('boolean', 'True'))])
-    ir_code = generator.generate(ast)
-    assert 'i1 1' in ir_code
-
-
-def test_fun_def_void(generator):
-    ast = ('program', [
-        ('fun_def', 'void', 'foo', [], [('return',)])
-    ])
-    ir_code = generator.generate(ast)
-    assert 'define i32 @"a"()' in ir_code
-    assert 'ret i32 0' in ir_code
-
-
-def test_fun_def_with_params(generator):
-    ast = ('program', [
-        ('fun_def', 'void', 'foo', [
-         ('int', 'a'), ('double', 'b')], [('return',)])
-    ])
-    ir_code = generator.generate(ast)
-    assert 'define void @"foo"(i32 %".1", double %".2")' in ir_code
-    assert '%"a" = alloca i32' in ir_code
-    assert '%"b" = alloca double' in ir_code
-
-
-def test_fun_def_with_body(generator):
-    ast = ('program', [
-        ('fun_def', 'void', 'foo', [('int', 'a')], [
-            ('var_def', 'int', 'b', ('integer', '10')),
-            ('assignment', 'b', ('binop', '+', ('identifier', 'a'), ('integer', '5')))
+    ast = [
+        ('fun_def', [], 'int', 'main', [], [
+            ('var_def', 'int', 'a', ('integer', '2')),
+            ("assignment", "+=", "a", ("integer", "4"))
         ])
-    ])
-    ir_code = generator.generate(ast)
-    assert 'define void @"foo"(i32 %".1")' in ir_code
-    assert '%"a" = alloca i32' in ir_code
-    assert '%".6" = add i32 %".5", 5' in ir_code
+    ]
+    results = generator.generate(ast)
+    assert '%"a" = alloca i32' in results
+    assert 'store i32 2, i32* %"a"' in results
+    assert '%"a_add" = add i32 %"a.1", 4' in results
 
 
-def test_when_stmts(generator):
-    ast = ('program', [
-        ('var_def', 'int', 'a', ('integer', '5')),
-        ('when_stmts',
-            ('when', ('comparison', '!=', ('identifier', 'a'), ('integer', '5')), [
-                ('assignment', 'a', ('integer', '10'))
-            ]),
-            ('when', ('comparison', '==', ('identifier', 'a'), ('integer', '5')), [
-                ('assignment', 'a', ('integer', '15'))
-            ]),
-         )
-    ])
-    ir_code = generator.generate(ast)
-    assert 'br i1 %".4", label %"entry.if", label %"entry.endif"' in ir_code
-    assert 'store i32 10, i32* %"a"' in ir_code
-    assert 'store i32 15, i32* %"a"' in ir_code
-
-
-def test_when(generator):
-    ast = ('program', [
-        ('var_def', 'int', 'a', ('integer', '5')),
-        ('when', ('comparison', '==', ('identifier', 'a'), ('integer', '5')), [
-            ('assignment', 'a', ('integer', '10'))
+def test_comparison_equal(generator):
+    ast = [
+        ('fun_def', [], 'int', 'main', [], [
+            ('var_def', 'int', 'a', ('integer', '1')),
+            ('var_def', 'int', 'b', ('integer', '1')),
+            ('when_stmts', [
+                ('when', ('comparison', '==', ('identifier', 'a'), ('identifier', 'b')), [
+                    ('var_def', 'int', 'c', ('integer', '10'))
+                ]),
+                ('otherwise', [
+                    ('var_def', 'int', 'c', ('integer', '20'))
+                ])
+            ])
         ])
-    ])
-    ir_code = generator.generate(ast)
-    assert 'br i1 %".4", label %"entry.if", label %"entry.endif"' in ir_code
-    assert 'store i32 10, i32* %"a"' in ir_code
+    ]
+    results = generator.generate(ast)
+    assert '%".4" = icmp eq i32 %"a.1", %"b.1"' in results
+
+
+def test_fun_call(generator):
+    ast = [
+        ('fun_def', [], 'int', 'main', [], [
+            ('fun_def', [], 'int', 'foo', [], [
+                ('return', ('integer', '42'))
+            ]),
+            ('fun_call', 'foo', [])
+        ])
+    ]
+    results = generator.generate(ast)
+    assert 'define i32 @"foo"()' in results
+    assert 'ret i32 42' in results
+    assert '%"foo_call" = call i32 @"foo"()' in results
+
+
+def test_fun_call_with_args(generator):
+    ast = [
+        ('fun_def', [], 'int', 'main', [], [
+            ('fun_def', [], 'int', 'add', [('int', 'a'), ('int', 'b')], [
+                ('return', ('binop', '+', ('identifier', 'a'), ('identifier', 'b')))
+            ]),
+        ])
+    ]
+    results = generator.generate(ast)
+    assert 'define i32 @"add"(i32 %".1", i32 %".2")' in results
+    assert '%".8" = add i32 %"a", %"b"' in results
 
 
 def test_class_def(generator):
-    ast = ('program', [
-        ('class_def', [], 'MyClass', [], [
-            ('var_def', 'int', 'x', ('integer', '42')),
-            ('fun_def', 'void', 'foo', [], [('return',)])
+    ast = [
+        ('class_def', [], 'MyClass', None, [
+            ('var_def', 'int', 'x', ('integer', '0')),
+            ('var_def', 'double', 'y', ('double', '0.0')),
+            ('class_ctor_def', [], [('int', 'a'), ('double', 'b')], [
+                ('assignment', '=', 'x', ('identifier', 'a')),
+                ('assignment', '=', 'y', ('identifier', 'b'))
+            ]),
+            ('fun_def', [], 'int', 'get_x', [], [
+                ('return', ('identifier', 'x'))
+            ]),
+            ('fun_def', [], 'double', 'get_y', [], [
+                ('return', ('identifier', 'y'))
+            ])
         ])
-    ])
-    ir_code = generator.generate(ast)
-    assert 'MyClass' in generator.current_scope()
-    assert '%"x" = alloca i32' in ir_code
-    assert 'define void @"foo"()' in ir_code
+    ]
+    results = generator.generate(ast)
+    assert '%"MyClass" = type {i32, double}' in results
+    assert 'define %"MyClass"* @"MyClass_ctor"(i32 %".1", double %".2")' in results
+    assert 'define i32 @"MyClass_get_x"(%"MyClass"* %".1")' in results
+    assert 'define double @"MyClass_get_y"(%"MyClass"* %".1")' in results
+
+
+def test_when_stmts(generator):
+    ast = [
+        ('fun_def', [], 'int', 'main', [], [
+            ('when_stmts', [
+                ('when', ('comparison', '==', ('integer', '1'), ('integer', '1')), [
+                    ('var_def', 'int', 'a', ('integer', '10'))
+                ]),
+                ('otherwise', [
+                    ('var_def', 'int', 'a', ('integer', '20'))
+                ])
+            ])
+        ])
+    ]
+    results = generator.generate(ast)
+    assert '%".2" = icmp eq i32 1, 1' in results
+
+
+def test_for_stmt(generator):
+    ast = [
+        ('fun_def', [], 'int', 'main', [], [
+            ('for_stmt', ('int', 'i'), ('array_literal', [('integer', '2'), ('integer', '3')]), [
+                ('var_def', 'int', 'a', ('identifier', 'i'))
+            ])
+        ])
+    ]
+    results = generator.generate(ast)
+    assert '%"index" = alloca i32' in results
+    assert 'br label %"loop"' in results
+    assert 'loop:' in results
+    assert '%"next_index" = add i32 %"index.1", 1' in results
+    assert 'br i1 %".10", label %"loop", label %"after_loop"' in results
+
+
+def test_switch_stmt(generator):
+    ast = [
+        ('fun_def', [], 'int', 'main', [], [
+            ('var_def', 'int', 'a', ('integer', '1')),
+            (
+                "switch_stmt",
+                ("identifier", "a"),
+                [
+                    ("case", ("integer", "4"), [("return", ("integer", "0"))]),
+                    ("case", ("integer", "1"), [("return", ("integer", "0"))]),
+                ],
+            )
+        ])
+    ]
+    results = generator.generate(ast)
+    assert 'switch i32 %"a.1", label %"switch_default" [i32 4, label %"case_4" i32 1, label %"case_1"]' in results

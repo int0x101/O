@@ -2,13 +2,16 @@ class ScopeStack:
     def __init__(self):
         self.scope_stack = [{}]
 
-    def enter_scope(self):
+    def define(self, name, value):
+        self.scope_stack[-1][name] = value
+
+    def enter(self):
         self.scope_stack.append({})
 
-    def exit_scope(self):
+    def leave(self):
         self.scope_stack.pop()
 
-    def current_scope(self):
+    def current(self):
         return self.scope_stack[-1]
 
     def resolve(self, name):
